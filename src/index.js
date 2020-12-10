@@ -45,10 +45,7 @@ app.get("/hotspotStates", async (req, res) => {
   let dataArr = [];
   data.map((data) => {
     let { state, infected, recovered, death,rate } = data;
-    //connection.data.aggregate([{rate: {$round: [("$infected" - "$recovered")/"$infected",5]}}]);
-    //console.log($round);
     if ((infected - recovered)/infected > 0.1) {
-        //let val = $round: [rate,5];
       dataArr.push({
         state: state,
         rate: ((infected - recovered)/infected).toFixed(5) ,
