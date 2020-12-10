@@ -1,79 +1,81 @@
-const express = require("express");
-const app = express();
+const express = require('express')
+const app = express()
 const bodyParser = require("body-parser");
-const port = 8080;
+const port = 8080
 
 // Parse JSON bodies (as sent by API clients)
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-const { connection } = require("./connector");
-const { data } = require("./data");
-const { STATES } = require("mongoose");
+const { connection } = require('./connector')
 
-app.get("/totalRecovered", async (req, res) => {
-  const data = await connection.find();
 
-  let totalRecoveredPatients = 0;
-  data.map((data) => {
-    totalRecoveredPatients = data.recovered + totalRecoveredPatients;
-  });
-  res.send({data: { _id: "total", recovered: totalRecoveredPatients }});
+app.get('/totalRecovered',(request, response)=>{
+
+    connection.find().then(data=>{
+        let totalRecovered = 0;
+        data.forEach(state=> totalRecovered+= (state.recovered));
+        response.send( {data: {_id: "total", recovered: totalRecovered}});
+    })
 });
 
-app.get("/totalActive", async (req, res) => {
-  const data = await connection.find();
-  let totalActivePatients = 0;
-  data.map((data) => {
-    totalActivePatients += data.infected - data.recovered;
-  });
-  res.send({data: { _id: "total", active: totalActivePatients }});
+app.get('/totalActive',(request, response)=>{
+
+    connection.find().then(data=>{
+        let totalInfected = 0;
+        let totalRecovered = 0;
+        data.forEach(state=>{
+            totalRecovered += state.recovered;
+            totalInfected += state.infected;
+        })
+        response.send( {data: {_id: "total", active: totalInfected - totalRecovered}});
+    });
 });
 
-app.get("/totalDeath", async (req, res) => {
-  const data = await connection.find();
+app.get('/totalDeath',(request, response)=>{
 
-  let totalDeathPatients = 0;
-  data.map((data) => {
-    totalDeathPatients = data.death + totalDeathPatients;
-  });
-  res.send({data: { _id: "total", recovered: totalDeathPatients }});
+    connection.find().then(data=>{
+        let totalDeath = 0;
+        data.forEach(state=> totalDeath += state.death);
+        response.send( {data: {_id: "total", death: totalDeath}});
+    });
 });
 
-app.get("/hotspotStates", async (req, res) => {
-  const data = await connection.find();
-  
-  let resArr = [];
-  data.map((data) => {
-    let { state, infected, recovered, death,rate } = data;
-    //connection.data.aggregate([{rate: {$round: [("$infected" - "$recovered")/"$infected",5]}}]);
-    //console.log($round);
-    if ((infected - recovered)/infected > 0.1) {
-        //let val = $round: [rate,5];
-      resArr.push({
-        state: state,
-        rate: ((infected - recovered)/infected).toFixed(5) ,
-      });
-    }
-  });
+app.get('/hotspotStates',(request, response)=>{
 
-  res.send({ data: resArr });
+    connection.find().then(data=>{
+        let hotspot = [];
+        data.forEach(state=>{
+            const rate = ((state.infected-state.recovered) / state.infected).toFixed(5);
+            if(rate > 0.1){
+                hotspot.push({
+                    state: state.state,
+                    rate: rate
+                });
+            }
+        });
+        response.send( {data: hotspot});
+    });
+
 });
 
-app.get("/healthyStates", async (req, res) => {
-  const data = await connection.find();
 
-  let resArr = [];
-  data.map((data) => {
-    let { state, infected, recovered, death } = data;
-    if (death / infected < 0.005) {
-      resArr.push({
-        state: state,
-        moratlity: (death / infected).toFixed(5),
-      });
-    }
-  });
-  res.send({ data: resArr });
+
+app.get('/healthyStates',(request, response)=>{
+    
+    connection.find().then(data=>{
+        let healthy = [];
+        data.forEach(state=>{
+            const morality = (state.death / state.infected).toFixed(5);
+            if(morality < 0.005){
+                healthy.push({
+                    state: state.state,
+                    morality: morality
+                });
+            }
+        });
+        response.send( {data: healthy});
+    });
 });
-app.listen(port, () => console.log(`App listening on port ${port}!`));
 
+app.listen(port, () => console.log(`App listening on port ${port}!`))
 module.exports = app;
