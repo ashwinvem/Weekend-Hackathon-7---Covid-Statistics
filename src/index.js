@@ -42,34 +42,37 @@ app.get("/totalDeath", async (req, res) => {
 app.get("/hotspotStates", async (req, res) => {
   const data = await connection.find();
   
-  let dataArr = [];
+  let resArr = [];
   data.map((data) => {
     let { state, infected, recovered, death,rate } = data;
+    //connection.data.aggregate([{rate: {$round: [("$infected" - "$recovered")/"$infected",5]}}]);
+    //console.log($round);
     if ((infected - recovered)/infected > 0.1) {
-      dataArr.push({
+        //let val = $round: [rate,5];
+      resArr.push({
         state: state,
         rate: ((infected - recovered)/infected).toFixed(5) ,
       });
     }
   });
 
-  res.send({ data: dataArr });
+  res.send({ data: resArr });
 });
 
 app.get("/healthyStates", async (req, res) => {
   const data = await connection.find();
 
-  let dataArr = [];
+  let resArr = [];
   data.map((data) => {
     let { state, infected, recovered, death } = data;
     if (death / infected < 0.005) {
-      dataArr.push({
+      resArr.push({
         state: state,
         moratlity: (death / infected).toFixed(5),
       });
     }
   });
-  res.send({ data: dataArr });
+  res.send({ data: resArr });
 });
 app.listen(port, () => console.log(`App listening on port ${port}!`));
 
