@@ -8,9 +8,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 const { connection } = require('./connector')
 
-// app.get("/", (req,res)=>{ //For Check
-//     res.send("Hello");
-// })
 
 app.get("/totalRecovered",  async(req,res)=>{
     const totalRecovered =  await collection_connection.aggregate([ {
@@ -21,13 +18,9 @@ app.get("/totalRecovered",  async(req,res)=>{
             }
         }
     } ] );
-    //console.log((...totalRecovered));
     let x = totalRecovered[0];
-    //console.log(x);
     let y = {...x};
-    //console.log(y);
     let result = {data: y};
-    //console.log(result);
     res.send(result);
 })
 
@@ -51,11 +44,8 @@ app.get("/totalActive", async(req,res)=>{
             }
         }
     } ] );
-    //console.log(infected);
     const infect = infected[0].infected;
 
-    //console.log(recover);
-    //console.log(infect);
     const active = infect - recover;
 
     const result = {data: {_id: "total", active:active}};
@@ -74,7 +64,6 @@ app.get("/totalDeath", async (req,res)=>{
         }
     } ] );
 
-    //console.log(deathToll);
     const x= deathToll[0];
     const result = {data : x};
     console.log(result);
